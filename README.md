@@ -2,7 +2,7 @@
 Smart agribusiness and climate defence system for macadamia and citrus farming
 
 
-#SOURCE CODE FOR THE 
+#SOURCE CODE FOR THE AGROSHIELD 
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -88,3 +88,20 @@ float getDistance() {
   if (duration == 0) return tankHeight;
   return duration * 0.0343 / 2;
 }
+
+
+GREATINGS TO ALL!!
+Today we are presenting Agro Shield Twin, our smart climate-defense solution for macadamia and citrus farming in Mpumalanga.
+Farmers face changing environmental conditions such as high temperatures and insufficient soil moisture. The challenge is that these conditions may not affect the entire farm equally. One area can be dry while another area still has enough moisture.
+Our solution is designed to identify exactly which farming zone needs attention.
+Agro Shield Twin uses soil-moisture and temperature sensors to continuously monitor different zones of the farm. The sensor information is processed locally by an ESP-32
+When the system detects low soil moisture, it can automatically activate a relay and irrigation pump to provide water to the affected zone. When high temperatures are detected, it alertsC to the particular situation so that they  shade the farm to help protect the crops.
+But our project goes further.
+We connect the physical farm to a 3D digital twin. The digital twin represents the different farm zones and displays their current conditions. If Zone 2 becomes too dry, for example, the digital twin highlights Zone 2 as stressed and shows that irrigation is active.
+Our system therefore follows four important steps:
+Sense. Decide. Act. Protect.
+We also designed the system to handle sensor faults, record historical data, and allow manual intervention when necessary.
+Our prototype demonstrates how edge computing, sensors, automation, and 3D visualisation can work together to support climate-smart agriculture.
+Our vision is not to replace the farmer, but to give the farmer better information and faster, targeted responses.
+Agro Shield Twin — Sense. Decide. Act. Protect.
+Thank you!!

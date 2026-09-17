@@ -1,0 +1,83 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxx"
+#define BLYNK_TEMPLATE_NAME "Smart Farm"
+#define BLYNK_AUTH_TOKEN "YourAuthToken"
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <ESP32Servo.h>
+
+char ssid[] = "YOUR_WIFI";
+char pass[] = "YOUR_PASS";
+
+// Keyestudio sensors
+int soilPins[4] = {32,33,34,35}; // Keyestudio Soil Moisture Sensors
+#define TEMP_PIN 2 // Keyestudio DS18B20 Temp Sensor
+OneWire oneWire(TEMP_PIN);
+DallasTemperature tempSensor(&oneWire);
+Servo ventServo;
+
+int pumpPins[4] = {16,17,18,19};
+int trigPin = 5, echoPin = 4;
+int servoPin = 13;
+
+int crop = 1;
+float tankHeight = 30.0;
+bool ventOpen = false;
+bool manualMode = false;
+bool manualPump[4] = {0,0,0,0};
+
+BlynkTimer timer;
+
+BLYNK_WRITE(V0){ crop = param.asInt(); }
+BLYNK_WRITE(V12){ manualMode = param.asInt(); }
+
+void sendData(){
+  tempSensor.requestTemperatures();
+  float temp = tempSensor.getTempCByIndex(0);
+
+  if(temp!= -127.0){
+    if(temp > 35 &&!ventOpen){ ventServo.write(90); ventOpen=true; Blynk.logEvent("high_temp", String("Temp: ")+temp+"C - Vent OPENED"); }
+    if(temp <= 32 && ventOpen){ ventServo.write(0); ventOpen=false; }
+    Blynk.virtualWrite(V6, temp);
+    Blynk.virtualWrite(V7, ventOpen?1:0);
+  }
+
+  float waterLevel = constrain(tankHeight - getDistance(), 0, tankHeight);
+  int tankPercent = (waterLevel / tankHeight) * 100;
+  Blynk.virtualWrite(V5, tankPercent);
+  bool tankOK = tankPercent > 10;
+  int threshold = (crop==1)?65:55; // Mac 65% Citrus 55%
+
+  for(int i=0;i<4;i++){
+    int raw = analogRead(soilPins[i]);
+    // Keyestudio calibration: Air ~ 3000-3500, Water ~ 1000-1200
+    int moist = constrain(map(raw, 3000, 1100, 0, 100),0,100);
+    Blynk.virtualWrite(V1+i, moist);
+    if(!manualMode){
+      bool irrig = (moist < threshold && tankOK);
+      digitalWrite(pumpPins[i], irrig?HIGH:LOW);
+    }
+  }
+}
+
+void setup(){
+  for(int i=0;i<4;i++) pinMode(pumpPins[i], OUTPUT);
+  pinMode(trigPin, OUTPUT); pinMode(echoPin, INPUT);
+  tempSensor.begin();
+  ventServo.attach(servoPin); ventServo.write(0);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  timer.setInterval(3000L, sendData);
+}
+
+void loop(){ Blynk.run(); timer.run(); }
+
+float getDistance(){
+  digitalWrite(trigPin, LOW); delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH); delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  long d=pulseIn(echoPin,HIGH,30000);
+  if(d==0) return tankHeight;
+  return d*0.0343/2;
+}
